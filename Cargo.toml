@@ -6,3 +6,29 @@ authors = ["Hilmar Gústafsson <hilmargustafs@gmail.com>", "Thomas Højriis Knud
 edition = "2018"
 
 [dependencies]
+bitflags = "1.2.1"
+glium = { version = "0.27.0", default-features = false }
+input = { version = "0.5.0", features = ["udev"], optional = true }
+rand = "0.7"
+slog = { version = "2.1.1" }
+slog-term = "2.3"
+slog-async = "2.2"
+wayland-server = "0.26"
+xkbcommon = "0.4.0"
+
+[dependencies.smithay]
+git = "https://github.com/smithay/smithay"
+default-features = false
+features = [ "renderer_glium", "backend_egl", "wayland_frontend" ]
+
+[build-dependencies]
+gl_generator = "0.14"
+
+[features]
+default = [ "winit", "egl", "udev", "logind" ]
+egl = [ "smithay/use_system_lib" ]
+winit = [ "smithay/backend_winit" ]
+udev = [ "smithay/backend_libinput", "smithay/backend_udev", "smithay/backend_drm_atomic", "smithay/backend_drm_legacy", "smithay/backend_drm_gbm", "smithay/backend_drm_eglstream", "smithay/backend_drm_egl", "smithay/backend_session", "input" ]
+logind = [ "smithay/backend_session_logind" ]
+elogind = ["logind", "smithay/backend_session_elogind" ]
+test_all_features = ["default"]
