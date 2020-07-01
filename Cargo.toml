@@ -2,7 +2,7 @@
 name = "rwwm"
 description = "The Rust Wayland Window Manager"
 version = "0.1.0"
-authors = ["Hilmar Gústafsson <hilmargustafs@gmail.com>"]
+authors = ["Hilmar Gústafsson <hilmargustafs@gmail.com>", "Thomas Højriis Knudsen <thomas@hoejriisknudsen.dk>"]
 edition = "2018"
 
 [dependencies]
