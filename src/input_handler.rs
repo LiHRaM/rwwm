@@ -21,7 +21,9 @@ impl AnvilState {
         match event {
             InputEvent::Keyboard { event, .. } => self.on_keyboard_key::<B>(event),
             InputEvent::PointerMotion { event, .. } => self.on_pointer_move::<B>(event),
-            InputEvent::PointerMotionAbsolute { event, .. } => self.on_pointer_move_absolute::<B>(event),
+            InputEvent::PointerMotionAbsolute { event, .. } => {
+                self.on_pointer_move_absolute::<B>(event)
+            }
             InputEvent::PointerButton { event, .. } => self.on_pointer_button::<B>(event),
             InputEvent::PointerAxis { event, .. } => self.on_pointer_axis::<B>(event),
             _ => {
@@ -90,7 +92,8 @@ impl AnvilState {
                     let x = outputs
                         .iter()
                         .take(num)
-                        .fold(0, |acc, output| acc + output.size.0) as f64
+                        .fold(0, |acc, output| acc + output.size.0)
+                        as f64
                         + (output.size.0 as f64 / 2.0);
                     let y = output.size.1 as f64 / 2.0;
                     *self.pointer_location.borrow_mut() = (x as f64, y as f64)
@@ -145,7 +148,10 @@ impl AnvilState {
         };
         *self.pointer_location.borrow_mut() = (x, y);
         let serial = SCOUNTER.next_serial();
-        let under = self.window_map.borrow().get_surface_under((x as f64, y as f64));
+        let under = self
+            .window_map
+            .borrow()
+            .get_surface_under((x as f64, y as f64));
         self.pointer.motion((x, y), under, serial, evt.time());
     }
 
@@ -191,12 +197,14 @@ impl AnvilState {
             .map(|(idx, _)| idx - 1)
             .unwrap_or(outputs.len() - 1)
     }
+
     #[cfg(feature = "udev")]
     fn current_output_size(&self, x: f64) -> (u32, u32) {
         let output_map = self.output_map.as_ref().unwrap();
         let outputs = output_map.borrow();
         outputs[self.current_output_idx(x)].size
     }
+
     #[cfg(feature = "udev")]
     fn current_output_offset(&self, x: f64) -> u32 {
         let output_map = self.output_map.as_ref().unwrap();
@@ -237,7 +245,9 @@ impl AnvilState {
         let source = match evt.source() {
             input::AxisSource::Continuous => wl_pointer::AxisSource::Continuous,
             input::AxisSource::Finger => wl_pointer::AxisSource::Finger,
-            input::AxisSource::Wheel | input::AxisSource::WheelTilt => wl_pointer::AxisSource::Wheel,
+            input::AxisSource::Wheel | input::AxisSource::WheelTilt => {
+                wl_pointer::AxisSource::Wheel
+            }
         };
         let horizontal_amount = evt
             .amount(input::Axis::Horizontal)
@@ -296,7 +306,7 @@ fn process_keyboard_shortcut(modifiers: ModifiersState, keysym: Keysym) -> KeyAc
         KeyAction::Quit
     } else if keysym >= xkb::KEY_XF86Switch_VT_1 && keysym <= xkb::KEY_XF86Switch_VT_12 {
         // VTSwicth
-        KeyAction::VtSwitch((keysym - xkb::KEY_XF86Switch_VT_1 + 1) as i32)
+            KeyAction::VtSwitch((keysym - xkb::KEY_XF86Switch_VT_1 + 1) as i32)
     } else if modifiers.logo && keysym == xkb::KEY_Return {
         // run terminal
         KeyAction::Run("weston-terminal".into())

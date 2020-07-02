@@ -88,7 +88,8 @@ impl<T: Into<GliumGraphicsBackend<T>> + GLGraphicsBackend + 'static> GliumDrawer
 
         // building the index buffer
         let index_buffer =
-            glium::IndexBuffer::new(&display, PrimitiveType::TriangleStrip, &[1 as u16, 2, 0, 3]).unwrap();
+            glium::IndexBuffer::new(&display, PrimitiveType::TriangleStrip, &[1 as u16, 2, 0, 3])
+                .unwrap();
 
         let programs = opengl_programs!(&display);
 
@@ -113,7 +114,10 @@ impl<F: GLGraphicsBackend + CursorBackend + 'static> GliumDrawer<F> {
         position: (i32, i32),
     ) {
         let (x, y) = position;
-        let _ = self.display.borrow().set_cursor_position(x as u32, y as u32);
+        let _ = self
+            .display
+            .borrow()
+            .set_cursor_position(x as u32, y as u32);
         if !self.hardware_cursor.swap(true, Ordering::SeqCst)
             && self
                 .display
@@ -132,7 +136,9 @@ impl<F: GLGraphicsBackend + CursorBackend + 'static> GliumDrawer<F> {
         (x, y): (i32, i32),
         token: MyCompositorToken,
     ) {
-        let (dx, dy) = match token.with_role_data::<CursorImageRole, _, _>(surface, |data| data.hotspot) {
+        let (dx, dy) = match token
+            .with_role_data::<CursorImageRole, _, _>(surface, |data| data.hotspot)
+        {
             Ok(h) => h,
             Err(_) => {
                 warn!(
@@ -307,11 +313,13 @@ impl<F: GLGraphicsBackend + 'static> GliumDrawer<F> {
                                     blending: ::glium::Blend {
                                         color: ::glium::BlendingFunction::Addition {
                                             source: ::glium::LinearBlendingFactor::One,
-                                            destination: ::glium::LinearBlendingFactor::OneMinusSourceAlpha,
+                                            destination:
+                                                ::glium::LinearBlendingFactor::OneMinusSourceAlpha,
                                         },
                                         alpha: ::glium::BlendingFunction::Addition {
                                             source: ::glium::LinearBlendingFactor::One,
-                                            destination: ::glium::LinearBlendingFactor::OneMinusSourceAlpha,
+                                            destination:
+                                                ::glium::LinearBlendingFactor::OneMinusSourceAlpha,
                                         },
                                         ..Default::default()
                                     },

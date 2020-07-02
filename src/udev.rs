@@ -82,13 +82,19 @@ type RenderDevice = FallbackDevice<
         GbmDevice<FallbackDevice<AtomicDrmDevice<SessionFd>, LegacyDrmDevice<SessionFd>>>,
     >,
     EglDevice<
-        EglStreamDeviceBackend<FallbackDevice<AtomicDrmDevice<SessionFd>, LegacyDrmDevice<SessionFd>>>,
+        EglStreamDeviceBackend<
+            FallbackDevice<AtomicDrmDevice<SessionFd>, LegacyDrmDevice<SessionFd>>,
+        >,
         EglStreamDevice<FallbackDevice<AtomicDrmDevice<SessionFd>, LegacyDrmDevice<SessionFd>>>,
     >,
 >;
 type RenderSurface = FallbackSurface<
-    EglSurface<GbmSurface<FallbackSurface<AtomicDrmSurface<SessionFd>, LegacyDrmSurface<SessionFd>>>>,
-    EglSurface<EglStreamSurface<FallbackSurface<AtomicDrmSurface<SessionFd>, LegacyDrmSurface<SessionFd>>>>,
+    EglSurface<
+        GbmSurface<FallbackSurface<AtomicDrmSurface<SessionFd>, LegacyDrmSurface<SessionFd>>>,
+    >,
+    EglSurface<
+        EglStreamSurface<FallbackSurface<AtomicDrmSurface<SessionFd>, LegacyDrmSurface<SessionFd>>>,
+    >,
 >;
 
 pub fn run_udev(
@@ -351,7 +357,11 @@ impl<Data: 'static> UdevHandlerImpl<Data> {
                     if let Entry::Vacant(entry) = backends.entry(crtc) {
                         let renderer = GliumDrawer::init(
                             device
-                                .create_surface(crtc, connector_info.modes()[0], &[connector_info.handle()])
+                                .create_surface(
+                                    crtc,
+                                    connector_info.modes()[0],
+                                    &[connector_info.handle()],
+                                )
                                 .unwrap(),
                             buffer_utils.clone(),
                             logger.clone(),
@@ -393,13 +403,19 @@ impl<Data: 'static> UdevHandlerImpl<Data> {
                 ) {
                     Ok(drm) => Some(drm),
                     Err(err) => {
-                        warn!(self.logger, "Skipping drm device, because of error: {}", err);
+                        warn!(
+                            self.logger,
+                            "Skipping drm device, because of error: {}", err
+                        );
                         None
                     }
                 }
             })
             .and_then(|drm| {
-                match FallbackDevice::<GbmDevice<_>, EglStreamDevice<_>>::new(drm, self.logger.clone()) {
+                match FallbackDevice::<GbmDevice<_>, EglStreamDevice<_>>::new(
+                    drm,
+                    self.logger.clone(),
+                ) {
                     Ok(dev) => Some(dev),
                     Err(err) => {
                         warn!(self.logger, "Skipping device, because of error: {}", err);
@@ -407,13 +423,18 @@ impl<Data: 'static> UdevHandlerImpl<Data> {
                     }
                 }
             })
-            .and_then(|dev| match FallbackDevice::new_egl(dev, self.logger.clone()) {
-                Ok(egl) => Some(egl),
-                Err(err) => {
-                    warn!(self.logger, "Skipping egl device, because of error: {}", err);
-                    None
-                }
-            })
+            .and_then(
+                |dev| match FallbackDevice::new_egl(dev, self.logger.clone()) {
+                    Ok(egl) => Some(egl),
+                    Err(err) => {
+                        warn!(
+                            self.logger,
+                            "Skipping egl device, because of error: {}", err
+                        );
+                        None
+                    }
+                },
+            )
         {
             // init hardware acceleration on the primary gpu.
             #[cfg(feature = "egl")]
@@ -456,7 +477,9 @@ impl<Data: 'static> UdevHandlerImpl<Data> {
                 loop_handle: self.loop_handle.clone(),
             };
             let restart_token = self.signaler.register(move |signal| match signal {
-                SessionSignal::ActivateSession | SessionSignal::ActivateDevice { .. } => listener.activate(),
+                SessionSignal::ActivateSession | SessionSignal::ActivateDevice { .. } => {
+                    listener.activate()
+                }
                 _ => {}
             });
             device.set_handler(DrmHandlerImpl {
@@ -548,7 +571,9 @@ impl<Data: 'static> DeviceHandler for DrmHandlerImpl<Data> {
     type Device = RenderDevice;
 
     fn vblank(&mut self, crtc: crtc::Handle) {
-        self.renderer.clone().render(crtc, None, Some(&self.loop_handle))
+        self.renderer
+            .clone()
+            .render(crtc, None, Some(&self.loop_handle))
     }
 
     fn error(&mut self, error: <RenderSurface as Surface>::Error) {
@@ -635,14 +660,21 @@ impl DrmRenderer {
 
             // set cursor
             if ptr_x >= 0 && ptr_x < width as i32 && ptr_y >= 0 && ptr_y < height as i32 {
-                let _ = drawer.borrow().set_cursor_position(ptr_x as u32, ptr_y as u32);
+                let _ = drawer
+                    .borrow()
+                    .set_cursor_position(ptr_x as u32, ptr_y as u32);
 
                 // draw the dnd icon if applicable
                 {
                     let guard = self.dnd_icon.lock().unwrap();
                     if let Some(ref surface) = *guard {
                         if surface.as_ref().is_alive() {
-                            drawer.draw_dnd_icon(&mut frame, surface, (ptr_x, ptr_y), self.compositor_token);
+                            drawer.draw_dnd_icon(
+                                &mut frame,
+                                surface,
+                                (ptr_x, ptr_y),
+                                self.compositor_token,
+                            );
                         }
                     }
                 }
@@ -679,11 +711,13 @@ impl DrmRenderer {
                     SwapBuffersError::TemporaryFailure(err) => {
                         match err.downcast_ref::<smithay::backend::drm::common::Error>() {
                             Some(&smithay::backend::drm::common::Error::DeviceInactive) => false,
-                            Some(&smithay::backend::drm::common::Error::Access { ref source, .. })
-                                if match source.get_ref() {
-                                    drm::SystemError::PermissionDenied => true,
-                                    _ => false,
-                                } =>
+                            Some(&smithay::backend::drm::common::Error::Access {
+                                ref source,
+                                ..
+                            }) if match source.get_ref() {
+                                drm::SystemError::PermissionDenied => true,
+                                _ => false,
+                            } =>
                             {
                                 false
                             }
@@ -698,7 +732,9 @@ impl DrmRenderer {
                     match (timer, evt_handle) {
                         (Some(handle), _) => {
                             let _ = handle.add_timeout(
-                                Duration::from_millis(1000 /*a seconds*/ / 60 /*refresh rate*/),
+                                Duration::from_millis(
+                                    1000 /*a seconds*/ / 60, /*refresh rate*/
+                                ),
                                 (Rc::downgrade(&self), crtc),
                             );
                         }
@@ -706,7 +742,9 @@ impl DrmRenderer {
                             let timer = Timer::new().unwrap();
                             let handle = timer.handle();
                             let _ = handle.add_timeout(
-                                Duration::from_millis(1000 /*a seconds*/ / 60 /*refresh rate*/),
+                                Duration::from_millis(
+                                    1000 /*a seconds*/ / 60, /*refresh rate*/
+                                ),
                                 (Rc::downgrade(&self), crtc),
                             );
                             evt_handle

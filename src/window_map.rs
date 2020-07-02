@@ -217,7 +217,10 @@ where
         self.windows.insert(0, window);
     }
 
-    pub fn get_surface_under(&self, point: (f64, f64)) -> Option<(wl_surface::WlSurface, (f64, f64))> {
+    pub fn get_surface_under(
+        &self,
+        point: (f64, f64),
+    ) -> Option<(wl_surface::WlSurface, (f64, f64))> {
         for w in &self.windows {
             if let Some(surface) = w.matching(point, self.ctoken) {
                 return Some(surface);
@@ -264,7 +267,11 @@ where
 
     /// Refreshes the state of the toplevel, if it exists.
     pub fn refresh_toplevel(&mut self, toplevel: &Kind<R>) {
-        if let Some(w) = self.windows.iter_mut().find(|w| w.toplevel.equals(toplevel)) {
+        if let Some(w) = self
+            .windows
+            .iter_mut()
+            .find(|w| w.toplevel.equals(toplevel))
+        {
             w.self_update(self.ctoken);
         }
     }
@@ -298,7 +305,11 @@ where
 
     /// Sets the location of the toplevel, if it exists.
     pub fn set_location(&mut self, toplevel: &Kind<R>, location: (i32, i32)) {
-        if let Some(w) = self.windows.iter_mut().find(|w| w.toplevel.equals(toplevel)) {
+        if let Some(w) = self
+            .windows
+            .iter_mut()
+            .find(|w| w.toplevel.equals(toplevel))
+        {
             w.location = location;
             w.self_update(self.ctoken);
         }

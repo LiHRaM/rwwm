@@ -109,14 +109,15 @@ impl BufferUtils {
     }
 
     fn load_shm_buffer(&self, buffer: WlBuffer) -> Result<BufferTextures, WlBuffer> {
-        let (width, height, format) =
-            match shm_buffer_contents(&buffer, |_, data| (data.width, data.height, data.format)) {
-                Ok(x) => x,
-                Err(err) => {
-                    warn!(self.log, "Unable to load buffer contents"; "err" => format!("{:?}", err));
-                    return Err(buffer);
-                }
-            };
+        let (width, height, format) = match shm_buffer_contents(&buffer, |_, data| {
+            (data.width, data.height, data.format)
+        }) {
+            Ok(x) => x,
+            Err(err) => {
+                warn!(self.log, "Unable to load buffer contents"; "err" => format!("{:?}", err));
+                return Err(buffer);
+            }
+        };
         let shader = match crate::shm_load::load_format(format) {
             Ok(x) => x.1,
             Err(format) => {

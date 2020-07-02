@@ -112,7 +112,12 @@ pub fn run_winit(
                 let guard = state.dnd_icon.lock().unwrap();
                 if let Some(ref surface) = *guard {
                     if surface.as_ref().is_alive() {
-                        drawer.draw_dnd_icon(&mut frame, surface, (x as i32, y as i32), state.ctoken);
+                        drawer.draw_dnd_icon(
+                            &mut frame,
+                            surface,
+                            (x as i32, y as i32),
+                            state.ctoken,
+                        );
                     }
                 }
             }
@@ -129,7 +134,12 @@ pub fn run_winit(
                 }
                 // draw as relevant
                 if let CursorImageStatus::Image(ref surface) = *guard {
-                    drawer.draw_software_cursor(&mut frame, surface, (x as i32, y as i32), state.ctoken);
+                    drawer.draw_software_cursor(
+                        &mut frame,
+                        surface,
+                        (x as i32, y as i32),
+                        state.ctoken,
+                    );
                 } else {
                     drawer.draw_hardware_cursor(&CursorIcon::Default, (0, 0), (x as i32, y as i32));
                 }
@@ -140,7 +150,10 @@ pub fn run_winit(
             }
         }
         // Send frame events so that client start drawing their next frame
-        state.window_map.borrow().send_frames(SCOUNTER.next_serial());
+        state
+            .window_map
+            .borrow()
+            .send_frames(SCOUNTER.next_serial());
 
         if event_loop
             .dispatch(Some(Duration::from_millis(16)), &mut state)

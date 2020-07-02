@@ -17,7 +17,9 @@ use smithay::{
     },
     wayland::{
         compositor::CompositorToken,
-        data_device::{default_action_chooser, init_data_device, set_data_device_focus, DataDeviceEvent},
+        data_device::{
+            default_action_chooser, init_data_device, set_data_device_focus, DataDeviceEvent,
+        },
         seat::{CursorImageStatus, KeyboardHandle, PointerHandle, Seat, XkbConfig},
         shm::init_shm_global,
     },
@@ -67,7 +69,11 @@ impl AnvilState {
         // init the wayland connection
         let _wayland_event_source = handle
             .insert_source(
-                Generic::from_fd(display.borrow().get_poll_fd(), Interest::Readable, Mode::Level),
+                Generic::from_fd(
+                    display.borrow().get_poll_fd(),
+                    Interest::Readable,
+                    Mode::Level,
+                ),
                 {
                     let display = display.clone();
                     let log = log.clone();

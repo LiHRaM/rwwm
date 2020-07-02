@@ -8,7 +8,9 @@ use smithay::{
     reexports::{
         wayland_protocols::xdg_shell::server::xdg_toplevel,
         wayland_server::{
-            protocol::{wl_buffer, wl_callback, wl_pointer::ButtonState, wl_shell_surface, wl_surface},
+            protocol::{
+                wl_buffer, wl_callback, wl_pointer::ButtonState, wl_shell_surface, wl_surface,
+            },
             Display,
         },
     },
@@ -22,11 +24,12 @@ use smithay::{
         seat::{AxisFrame, CursorImageRole, GrabStartData, PointerGrab, PointerInnerHandle, Seat},
         shell::{
             legacy::{
-                wl_shell_init, ShellRequest, ShellState as WlShellState, ShellSurfaceKind, ShellSurfaceRole,
+                wl_shell_init, ShellRequest, ShellState as WlShellState, ShellSurfaceKind,
+                ShellSurfaceRole,
             },
             xdg::{
-                xdg_shell_init, PopupConfigure, ShellState as XdgShellState, ToplevelConfigure, XdgRequest,
-                XdgSurfacePendingState, XdgSurfaceRole,
+                xdg_shell_init, PopupConfigure, ShellState as XdgShellState, ToplevelConfigure,
+                XdgRequest, XdgSurfacePendingState, XdgSurfaceRole,
             },
         },
     },
@@ -186,7 +189,11 @@ impl PointerGrab for ResizeSurfaceGrab {
         let (min_size, max_size) =
             self.ctoken
                 .with_surface_data(self.toplevel.get_surface().unwrap(), |attrs| {
-                    let data = attrs.user_data.get::<RefCell<SurfaceData>>().unwrap().borrow();
+                    let data = attrs
+                        .user_data
+                        .get::<RefCell<SurfaceData>>()
+                        .unwrap()
+                        .borrow();
                     (data.min_size, data.max_size)
                 });
 
@@ -215,7 +222,10 @@ impl PointerGrab for ResizeSurfaceGrab {
                 serial,
             }),
             SurfaceKind::Wl(wl) => wl.send_configure(
-                (self.last_window_size.0 as u32, self.last_window_size.1 as u32),
+                (
+                    self.last_window_size.0 as u32,
+                    self.last_window_size.1 as u32,
+                ),
                 self.edges.into(),
             ),
         }
@@ -250,7 +260,8 @@ impl PointerGrab for ResizeSurfaceGrab {
                             .unwrap()
                             .borrow_mut();
                         if let ResizeState::Resizing(resize_data) = data.resize_state {
-                            data.resize_state = ResizeState::WaitingForFinalAck(resize_data, serial);
+                            data.resize_state =
+                                ResizeState::WaitingForFinalAck(resize_data, serial);
                         } else {
                             panic!("invalid resize state: {:?}", data.resize_state);
                         }
@@ -290,7 +301,11 @@ pub struct ShellHandles {
     pub window_map: Rc<RefCell<MyWindowMap>>,
 }
 
-pub fn init_shell(display: &mut Display, buffer_utils: BufferUtils, log: ::slog::Logger) -> ShellHandles {
+pub fn init_shell(
+    display: &mut Display,
+    buffer_utils: BufferUtils,
+    log: ::slog::Logger,
+) -> ShellHandles {
     // TODO: this is awkward...
     let almost_window_map = Rc::new(RefCell::new(None::<Rc<RefCell<MyWindowMap>>>));
     let almost_window_map_compositor = almost_window_map.clone();
@@ -442,7 +457,9 @@ pub fn init_shell(display: &mut Display, buffer_utils: BufferUtils, log: ::slog:
             XdgRequest::AckConfigure { surface, .. } => {
                 let waiting_for_serial = compositor_token.with_surface_data(&surface, |attrs| {
                     if let Some(data) = attrs.user_data.get::<RefCell<SurfaceData>>() {
-                        if let ResizeState::WaitingForFinalAck(_, serial) = data.borrow().resize_state {
+                        if let ResizeState::WaitingForFinalAck(_, serial) =
+                            data.borrow().resize_state
+                        {
                             return Some(serial);
                         }
                     }
@@ -464,7 +481,9 @@ pub fn init_shell(display: &mut Display, buffer_utils: BufferUtils, log: ::slog:
                                 .get::<RefCell<SurfaceData>>()
                                 .unwrap()
                                 .borrow_mut();
-                            if let ResizeState::WaitingForFinalAck(resize_data, _) = data.resize_state {
+                            if let ResizeState::WaitingForFinalAck(resize_data, _) =
+                                data.resize_state
+                            {
                                 data.resize_state = ResizeState::WaitingForCommit(resize_data);
                             } else {
                                 unreachable!()
@@ -529,7 +548,8 @@ pub fn init_shell(display: &mut Display, buffer_utils: BufferUtils, log: ::slog:
                     }
 
                     let toplevel = SurfaceKind::Wl(surface);
-                    let initial_window_location = shell_window_map.borrow().location(&toplevel).unwrap();
+                    let initial_window_location =
+                        shell_window_map.borrow().location(&toplevel).unwrap();
 
                     let grab = MoveSurfaceGrab {
                         start_data,
@@ -571,22 +591,26 @@ pub fn init_shell(display: &mut Display, buffer_utils: BufferUtils, log: ::slog:
                     }
 
                     let toplevel = SurfaceKind::Wl(surface.clone());
-                    let initial_window_location = shell_window_map.borrow().location(&toplevel).unwrap();
+                    let initial_window_location =
+                        shell_window_map.borrow().location(&toplevel).unwrap();
                     let geometry = shell_window_map.borrow().geometry(&toplevel).unwrap();
                     let initial_window_size = (geometry.width, geometry.height);
 
-                    compositor_token.with_surface_data(surface.get_surface().unwrap(), move |attrs| {
-                        attrs
-                            .user_data
-                            .get::<RefCell<SurfaceData>>()
-                            .unwrap()
-                            .borrow_mut()
-                            .resize_state = ResizeState::Resizing(ResizeData {
-                            edges: edges.into(),
-                            initial_window_location,
-                            initial_window_size,
-                        });
-                    });
+                    compositor_token.with_surface_data(
+                        surface.get_surface().unwrap(),
+                        move |attrs| {
+                            attrs
+                                .user_data
+                                .get::<RefCell<SurfaceData>>()
+                                .unwrap()
+                                .borrow_mut()
+                                .resize_state = ResizeState::Resizing(ResizeData {
+                                edges: edges.into(),
+                                initial_window_location,
+                                initial_window_size,
+                            });
+                        },
+                    );
 
                     let grab = ResizeSurfaceGrab {
                         start_data,
@@ -750,7 +774,11 @@ impl SurfaceData {
             return true;
         }
 
-        self.current_state.input_region.as_ref().unwrap().contains(point)
+        self.current_state
+            .input_region
+            .as_ref()
+            .unwrap()
+            .contains(point)
     }
 
     /// Send the frame callback if it had been requested
@@ -913,10 +941,12 @@ fn surface_commit(
                         let mut location = window_map.location(&toplevel).unwrap();
 
                         if edges.intersects(ResizeEdge::LEFT) {
-                            location.0 = initial_window_location.0 + (initial_window_size.0 - width);
+                            location.0 =
+                                initial_window_location.0 + (initial_window_size.0 - width);
                         }
                         if edges.intersects(ResizeEdge::TOP) {
-                            location.1 = initial_window_location.1 + (initial_window_size.1 - height);
+                            location.1 =
+                                initial_window_location.1 + (initial_window_size.1 - height);
                         }
 
                         new_location = Some(location);
