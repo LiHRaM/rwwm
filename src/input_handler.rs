@@ -288,7 +288,7 @@ enum KeyAction {
     /// Trigger a vt-switch
     VtSwitch(i32),
     /// run a command
-    Run(String),
+    Run(&'static str),
     /// Switch the current screen
     Screen(usize),
     /// Forward the key to the client
@@ -297,22 +297,26 @@ enum KeyAction {
     None,
 }
 
+const TERMINAL: &str = "alacritty";
+
 fn process_keyboard_shortcut(modifiers: ModifiersState, keysym: Keysym) -> KeyAction {
-    if modifiers.ctrl && modifiers.alt && keysym == xkb::KEY_BackSpace
-        || modifiers.logo && keysym == xkb::KEY_q
-    {
-        // ctrl+alt+backspace = quit
-        // logo + q = quit
-        KeyAction::Quit
-    } else if keysym >= xkb::KEY_XF86Switch_VT_1 && keysym <= xkb::KEY_XF86Switch_VT_12 {
-        // VTSwicth
+    let ModifiersState {
+        ctrl,
+        alt,
+        logo,
+        shift,
+        caps_lock,
+        num_lock,
+    } = modifiers;
+
+    match keysym {
+        xkb::KEY_BackSpace if ctrl && alt => KeyAction::Quit,
+        xkb::KEY_q if logo => KeyAction::Quit,
+        xkb::KEY_XF86Switch_VT_1..=xkb::KEY_XF86Switch_VT_12 => {
             KeyAction::VtSwitch((keysym - xkb::KEY_XF86Switch_VT_1 + 1) as i32)
-    } else if modifiers.logo && keysym == xkb::KEY_Return {
-        // run terminal
-        KeyAction::Run("weston-terminal".into())
-    } else if modifiers.logo && keysym >= xkb::KEY_1 && keysym <= xkb::KEY_9 {
-        KeyAction::Screen((keysym - xkb::KEY_1) as usize)
-    } else {
-        KeyAction::Forward
+        }
+        xkb::KEY_Return if logo => KeyAction::Run(TERMINAL),
+        xkb::KEY_1..=xkb::KEY_9 => KeyAction::Screen((keysym - xkb::KEY_1) as usize),
+        _ => KeyAction::Forward,
     }
 }
