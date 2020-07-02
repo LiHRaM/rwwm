@@ -311,12 +311,11 @@ fn process_keyboard_shortcut(modifiers: ModifiersState, keysym: Keysym) -> KeyAc
 
     match keysym {
         xkb::KEY_BackSpace if ctrl && alt => KeyAction::Quit,
-        xkb::KEY_q if logo => KeyAction::Quit,
         xkb::KEY_XF86Switch_VT_1..=xkb::KEY_XF86Switch_VT_12 => {
             KeyAction::VtSwitch((keysym - xkb::KEY_XF86Switch_VT_1 + 1) as i32)
         }
         xkb::KEY_Return if logo => KeyAction::Run(TERMINAL),
-        xkb::KEY_1..=xkb::KEY_9 => KeyAction::Screen((keysym - xkb::KEY_1) as usize),
+        xkb::KEY_1..=xkb::KEY_9 if logo => KeyAction::Screen((keysym - xkb::KEY_1) as usize),
         _ => KeyAction::Forward,
     }
 }
