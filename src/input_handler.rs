@@ -135,7 +135,7 @@ impl AnvilState {
                     let screen_size = self.current_output_size(x);
                     // monitor coordinates
                     let (ux, uy) = evt.position_transformed(screen_size);
-                    ((ux + self.current_output_offset(x)) as f64, uy as f64)
+                    (ux + self.current_output_offset(x) as f64, uy as f64)
                 } else {
                     // we are started in winit
                     evt.position()
@@ -298,6 +298,7 @@ enum KeyAction {
 }
 
 const TERMINAL: &str = "alacritty";
+const LAUNCHER: &str = "dmenu_run";
 
 fn process_keyboard_shortcut(modifiers: ModifiersState, keysym: Keysym) -> KeyAction {
     let ModifiersState {
@@ -314,6 +315,7 @@ fn process_keyboard_shortcut(modifiers: ModifiersState, keysym: Keysym) -> KeyAc
         xkb::KEY_XF86Switch_VT_1..=xkb::KEY_XF86Switch_VT_12 => {
             KeyAction::VtSwitch((keysym - xkb::KEY_XF86Switch_VT_1 + 1) as i32)
         }
+        xkb::KEY_p if logo => KeyAction::Run(LAUNCHER),
         xkb::KEY_Return if logo => KeyAction::Run(TERMINAL),
         xkb::KEY_1..=xkb::KEY_9 if logo => KeyAction::Screen((keysym - xkb::KEY_1) as usize),
         _ => KeyAction::Forward,
